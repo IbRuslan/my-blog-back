@@ -5,6 +5,7 @@ import {validationResult} from 'express-validator'
 import bcrypt from "bcrypt";
 import UserModel from './models/User.js'
 import jwt from "jsonwebtoken";
+import checkAuth from "./utils/checkAuth.js";
 
 mongoose.connect('mongodb+srv://admin:ibruslan@cluster0.kwrz95k.mongodb.net/blog?retryWrites=true&w=majority')
     .then(() => {
@@ -17,16 +18,24 @@ mongoose.connect('mongodb+srv://admin:ibruslan@cluster0.kwrz95k.mongodb.net/blog
 const app = express()
 app.use(express.json())
 
-app.get('/',
-    (req, res) => {
-        res.send('Hello World!')
-    })
-app.get('/auth/me',
-    (req, res) => {
+
+app.get('/auth/me', checkAuth,
+   async (req, res) => {
         try {
+            const user = await UserModel.findById(req.userId)
+            if(!user) {
+                return res.status(404).json({
+                    message: 'Пользователь не найден'
+                })
+            }
 
-        } catch {
-
+            const {passwordHash, ...userData} = user._doc
+            res.json(userData)
+        } catch(err) {
+            console.log(err)
+            res.status(500).json({
+                message: 'Не удалось авторизоваться'
+            })
         }
     }
 )
@@ -51,7 +60,7 @@ app.post('/auth/login',
                 {
                     _id: user._id,
                 },
-                'secterId',
+                'secret123',
                 {
                     expiresIn: '30d'
                 }
@@ -93,7 +102,7 @@ app.post('/auth/register', registerValidation,
                 {
                     _id: user._id,
                 },
-                'secterId',
+                'secret123',
                 {
                     expiresIn: '30d'
                 }
