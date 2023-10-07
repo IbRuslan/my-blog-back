@@ -7,6 +7,7 @@ import {authMe, login, register} from "./controllers/UserController.js";
 import {PostController} from "./controllers/PostController.js";
 import {postCreateValidation} from "./validations/post.js";
 import handlerErrors from "./utils/handlerErrors.js";
+import cors from 'cors'
 
 mongoose.connect('mongodb+srv://admin:ibruslan@cluster0.kwrz95k.mongodb.net/blog?retryWrites=true&w=majority')
     .then(() => {
@@ -30,6 +31,7 @@ const storage = multer.diskStorage({
 const upload = multer({storage})
 
 app.use(express.json())
+app.use(cors())
 app.use('/upload', express.static('uploads'))
 
 app.get('/auth/me', checkAuth, authMe)
@@ -47,6 +49,8 @@ app.get('/posts/:id', PostController.getOne)
 app.post('/posts', checkAuth, postCreateValidation, handlerErrors, PostController.create)
 app.patch('/posts/:id', checkAuth, postCreateValidation, handlerErrors, PostController.updatePost)
 app.delete('/posts/:id', checkAuth, PostController.remove)
+
+app.get('/posts/tags', PostController.getLastTags)
 
 
 app.listen(4444, (err) => {
